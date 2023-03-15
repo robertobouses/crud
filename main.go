@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi"
 )
@@ -15,6 +17,7 @@ type User struct {
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
 }
+
 type UserController struct{}
 
 func (uc *UserController) CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -30,10 +33,15 @@ func (uc *UserController) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 func (uc *UserController) GetUser(w http.ResponseWriter, r *http.Request) {
 	// Obtener el ID del usuario de los parámetros de la URL
-	userID := chi.URLParam(r, "userID")
+	userIDStr := chi.URLParam(r, "userID")
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	// Aquí se realizaría la consulta a la base de datos para obtener el usuario correspondiente al ID
 	user := User{ID: userID, Name: "John Doe", Email: "john.doe@example.com"}
-	if user.ID == "" {
+	if user.ID == 0 {
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
@@ -41,8 +49,6 @@ func (uc *UserController) GetUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (uc *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	// Obtener el ID del usuario de los parámetros de la URL
-	userID := chi.URLParam(r, "userID")
 	var user User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
@@ -57,7 +63,8 @@ func (uc *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	// Obtener el ID del usuario de los parámetros de la URL
 	userID := chi.URLParam(r, "userID")
 	// Aquí se eliminaría el usuario de la base de datos
-	w.WriteHeader(http.StatusOK)
+	// En este ejemplo simplemente se escribe un mensaje en la respuesta HTTP indicando que se eliminó el usuario
+	fmt.Fprintf(w, "User with ID %s has been deleted", userID)
 }
 
 func main() {
